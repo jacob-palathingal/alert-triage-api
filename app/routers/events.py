@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Event
 from app.schemas import EventCreate, EventResponse
+from app.classifier import classify
+
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -12,20 +14,27 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)):
     """
     Ingest a single log event.
 
-    Phase 1: Persists the raw event. Severity and incident_id are null for now.
-    Phase 2: Classifier will set severity before saving.
-    Phase 3: Aggregator will set incident_id before saving.
+    Phase 1: Persists the raw event.
+    Phase 2: Classifier sets severity before saving.
+    Phase 3: Aggregator groups event into an incident before saving.
+    Phase 4: Enricher will call Claude API to summarize the incident.
     """
+    # Step 1: classify
+    severity = classify(payload)
+
+    # Step 2: create the event object (not yet committed)
     event = Event(
         service=payload.service,
         level=payload.level,
         message=payload.message,
         timestamp=payload.timestamp,
-        severity=None,      
-        incident_id=None,  
+        severity=severity,
     )
-
     db.add(event)
+    db.flush()  # get event.id without committing, needed before aggregation
+
+
+    # Step 4: commit everything together
     db.commit()
     db.refresh(event)
 
