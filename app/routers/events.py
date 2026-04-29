@@ -5,6 +5,7 @@ from app.models import Event
 from app.schemas import EventCreate, EventResponse
 from app.classifier import classify
 from app.aggregator import aggregate
+from app.enricher import enrich_incident
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -37,7 +38,15 @@ def create_event(payload: EventCreate, db: Session = Depends(get_db)):
     incident = aggregate(db, event)
     event.incident_id = incident.id
 
-    # Step 4: commit everything together
+    # Step 4: enrich the incident with Claude API summary
+    # Only call Claude when a new incident is created (event_count == 1)
+    # No need to re-summarize every time an existing incident gets a new event
+    if incident.event_count == 1:
+        summary = enrich_incident(incident)
+        if summary:
+            incident.summary = summary
+
+    # Step 5: commit everything together
     db.commit()
     db.refresh(event)
 
