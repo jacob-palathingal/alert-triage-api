@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.database import engine, Base
-from app.routers import events
+from app.routers import events, incidents
 
 Base.metadata.create_all(bind=engine)
 
@@ -15,6 +15,8 @@ app = FastAPI(
 )
 
 app.include_router(events.router)
+app.include_router(incidents.router)
+
 
 
 @app.get("/health", tags=["Health"])
