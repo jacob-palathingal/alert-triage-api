@@ -16,8 +16,9 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/alerttriage
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     depends_on:
       - db
 
