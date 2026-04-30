@@ -1,17 +1,37 @@
+import os
+from openai import OpenAI
 from app.models import Incident
 
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def enrich_incident(incident: Incident) -> str | None:
+
+def enrich_incident(incident: Incident, triggering_message: str) -> str | None:
     """
-    Generates a plain-English incident summary.
-    Currently uses a structured template — designed to be swapped for
-    an LLM API call (OpenAI/Anthropic) with no changes to the calling code.
+    Calls the OpenAI API to generate a plain-English incident summary
+    based on the raw log message that triggered the incident.
+    Non-critical — if it fails, ingestion continues and summary stays null.
     """
     try:
-        return (
-            f"{incident.event_count} {incident.severity}-severity event(s) detected "
-            f"on {incident.service} starting at {incident.started_at.strftime('%Y-%m-%d %H:%M UTC')}."
+        prompt = (
+            f"You are an on-call engineer triaging a production incident. "
+            f"Based on the log message below, write one concise sentence describing "
+            f"what is likely happening and what the engineer should investigate first. "
+            f"Do not restate the log message — interpret it.\n\n"
+            f"Service: {incident.service}\n"
+            f"Severity: {incident.severity}\n"
+            f"Log message: {triggering_message}\n"
+            f"Event count: {incident.event_count}\n"
+            f"Started: {incident.started_at}\n"
         )
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            max_tokens=150,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        return response.choices[0].message.content
+
     except Exception as e:
-        print(f"[enricher] Enrichment failed: {e}")
+        print(f"[enricher] OpenAI API call failed: {e}")
         return None

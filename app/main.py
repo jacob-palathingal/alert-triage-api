@@ -9,7 +9,7 @@ app = FastAPI(
     description=(
         "Ingests application logs and alerts, classifies them by severity, "
         "groups related events into incidents, and enriches incidents with "
-        "plain-English summaries via the Claude API."
+        "plain-English summaries via the OpenAI API."
     ),
     version="0.1.0",
 )
