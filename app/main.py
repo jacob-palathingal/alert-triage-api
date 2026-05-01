@@ -23,3 +23,11 @@ app.include_router(incidents.router)
 def health_check():
     """Simple liveness check. Returns 200 if the API is running."""
     return {"status": "ok"}
+
+@app.get("/", tags=["Root"])
+def root():
+    return {
+        "service": "Alert Triage & Incident Summarization API",
+        "docs": "/docs",
+        "health": "/health"
+    }

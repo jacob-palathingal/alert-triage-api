@@ -181,4 +181,4 @@ PostgreSQL unique constraints treat multiple `NULL` values as distinct, which le
 
 ## Live URL
 
-`https://alert-triage-api.onrender.com`
+[https://alert-triage-api.onrender.com/docs](https://alert-triage-api.onrender.com/docs)
