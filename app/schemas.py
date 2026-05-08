@@ -13,7 +13,18 @@ class EventCreate(BaseModel):
     service: str = Field(..., example="auth-service")
     level: str = Field(..., example="ERROR")
     message: str = Field(..., example="Database connection timeout after 30s")
-    timestamp: datetime = Field(..., example="2026-04-25T10:00:00Z")
+    timestamp: Optional[datetime] = Field(
+    default=None,
+    description="Event timestamp. Defaults to current UTC time if not provided.",
+    example="2026-04-28T10:00:00Z"
+    )
+    window_minutes: int = Field(
+        default=5,
+        ge=1,
+        le=1440,
+        description="Time window in minutes for grouping events into the same incident. Defaults to 5. Max 1440 (24 hours).",
+        example=5
+    )
 
 
 # ── Outgoing responses ────────────────────────────────────────────────────────
